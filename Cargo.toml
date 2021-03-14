@@ -3,7 +3,23 @@ name = "wss"
 version = "0.1.0"
 authors = ["lamhai1401 <lamthanhhai141@gmail.com>"]
 edition = "2018"
+default-run = "wssbin"
+readme = "README.md"
+homepage = "https://github.com/lamhai1401/rust-wss"
+repository = "https://github.com/lamhai1401/rust-wss"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rand = "0.8.3"
+tokio = "1.3.0"
+# coio = { git = "https://github.com/zonyitoo/coio-rs.git" }
+# web_server = { git = "https://github.com/lamhai1401/rust-webserver.git" }
+
+[lib]
+name = "wsslib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wssbin"
+path = "src/bin/main.rs"
