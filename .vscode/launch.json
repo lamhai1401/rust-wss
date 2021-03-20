@@ -10,19 +10,24 @@
         "cargo": {
             "args": [
                 "build",
+                // "--lib",
                 "--bin=wssbin",
-                "--package=wss"
+                "--package=wss",
             ],
             "filter": {
                 "name": "wssbin",
                 "kind": "bin"
-            }
+            },
         },
-        "args": [],
+        "args": [
+            "--url", "https://localhost"
+        ],
         "cwd": "${workspaceFolder}",
+        // "cwd": "${workspaceRoot}/target/debug/",
         "stopOnEntry": false,
         "sourceLanguages": [
             "rust"
         ],
+        // "program": "${cargo:program}",
     }, ]
 }
