@@ -20,7 +20,7 @@
             },
         },
         "args": [
-            "--url", "https://localhost"
+            "--url", "https://localhost/"
         ],
         "cwd": "${workspaceFolder}",
         // "cwd": "${workspaceRoot}/target/debug/",

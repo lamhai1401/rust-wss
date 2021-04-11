@@ -10,17 +10,25 @@ repository = "https://github.com/lamhai1401/rust-wss"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+tokio-runtime = "0.0.0"
+tokio-tls = "0.3.1"
+tokio = { version = "1.4.0", features = ["full"] }
 futures = "0.3.13"
-structopt = "0.3.21"
-tokio = {version = "*", features = ["rt-threaded", "macros"] }
+futures-util = "0.3.13"
+futures-channel = "0.3.13"
 url = "2.2.1"
-websocket-lite = "0.5.0"
+tokio-tungstenite = "0.14.0"
+
+
+# structopt = "0.3.21"
+# tokio = { version = "*", features = ["full", "multi-rt-thread"] }"
+# futures_codec = "0.4.1"
 # coio = { git = "https://github.com/zonyitoo/coio-rs.git" }
 # web_server = { git = "https://github.com/lamhai1401/rust-webserver.git" }
 
 [lib]
-name = "wsslib"
-path = "src/lib.rs"
+name = "wss"
+# path = "src/"
 
 [[bin]]
 name = "wssbin"
