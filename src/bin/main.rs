@@ -1,18 +1,66 @@
-use std::io::{self, Write};
+extern crate wss;
+use wss::conn::client::WssClient;
 
-use futures::sink::SinkExt;
-use futures::stream::StreamExt;
-use structopt::StructOpt;
-use url::Url;
-use websocket_lite::{ClientBuilder, Message, Opcode, Result};
+use futures::*;
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
-const CONNECTION: &'static str = "wss://signal-conference-staging.quickom.com";
+const CONNECTION: &'static str = "wss://signal-conference-prod.quickom.com/?id=hailam";
+static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 
-// fn main() {
-//     println!("Connecting to {}", CONNECTION);
-// }
+use std::collections::HashMap;
+use tokio::sync::{mpsc, RwLock};
+
+type Clients = Arc<RwLock<HashMap<String, Client>>>;
+
+#[derive(Debug, Clone)]
+pub struct Client {
+    pub user_id: usize,
+    pub topics: Vec<String>,
+    pub sender: Option<mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>>,
+}
 
 #[tokio::main]
-async fn main() {
-    println!("Hello async")
+async fn main() -> Result<(), std::io::Error> {
+    println!("{:?}", NEXT_USER_ID);
+    let url = url::Url::parse(&CONNECTION).unwrap();
+
+    let (stdin_tx, stdin_rx) = futures_channel::mpsc::unbounded();
+    tokio::spawn(read_stdin(stdin_tx));
+
+    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
+    println!("WebSocket handshake has been successfully completed");
+
+    let (write, read) = ws_stream.split();
+
+    let stdin_to_ws = stdin_rx.map(Ok).forward(write);
+    let ws_to_stdout = {
+        read.for_each(|message| async {
+            let data = message.unwrap().into_data();
+            println!("Receive msg: {:?}", data);
+            // tokio::io::stdout().write_all(&data).await.unwrap();
+        })
+    };
+    pin_mut!(stdin_to_ws, ws_to_stdout);
+    future::select(stdin_to_ws, ws_to_stdout).await;
+    Ok(())
+}
+
+// Our helper method which will read data from stdin and send it along the
+// sender provided.
+async fn read_stdin(tx: futures_channel::mpsc::UnboundedSender<Message>) {
+    let mut stdin = tokio::io::stdin();
+    loop {
+        let mut buf = vec![0; 1024];
+        let n = match stdin.read(&mut buf).await {
+            Err(_) | Ok(0) => break,
+            Ok(n) => n,
+        };
+        buf.truncate(n);
+        tx.unbounded_send(Message::binary(buf)).unwrap();
+    }
 }

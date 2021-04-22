@@ -18,6 +18,8 @@ futures-util = "0.3.13"
 futures-channel = "0.3.13"
 url = "2.2.1"
 tokio-tungstenite = { version = "*", features = ["tls"] }
+tokio-net = "0.0.0"
+warp = "0.3.1"
 
 
 # structopt = "0.3.21"
