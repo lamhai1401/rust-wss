@@ -1,66 +1,86 @@
 extern crate wss;
-use wss::conn::client::WssClient;
+use wss::conn::client::Client;
 
-use futures::*;
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
-};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+// use std::sync::{
+//     atomic::{AtomicUsize, Ordering},
+//     Arc,
+// };
 
-const CONNECTION: &'static str = "wss://signal-conference-prod.quickom.com/?id=hailam";
-static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
+// static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
+
+// use std::collections::HashMap;
+// use tokio::sync::{mpsc, RwLock};
+
+// type Clients = Arc<RwLock<HashMap<String, Client>>>;
 
 use std::collections::HashMap;
-use tokio::sync::{mpsc, RwLock};
-
-type Clients = Arc<RwLock<HashMap<String, Client>>>;
-
-#[derive(Debug, Clone)]
-pub struct Client {
-    pub user_id: usize,
-    pub topics: Vec<String>,
-    pub sender: Option<mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>>,
-}
+use std::thread;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    println!("{:?}", NEXT_USER_ID);
-    let url = url::Url::parse(&CONNECTION).unwrap();
+    let mut client = Client::new();
+    let result = client.connect().await.expect("Cannot connect");
 
-    let (stdin_tx, stdin_rx) = futures_channel::mpsc::unbounded();
-    tokio::spawn(read_stdin(stdin_tx));
+    println!("{:?}", result);
+    // tokio::spawn(read_stdin(stdin_tx));
 
-    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
-    println!("WebSocket handshake has been successfully completed");
+    // let (write, read) = ws_stream.split();
 
-    let (write, read) = ws_stream.split();
+    // let stdin_to_ws = stdin_rx.map(Ok).forward(write);
+    // let ws_to_stdout = {
+    //     read.for_each(|message| async {
+    //         let data = message.unwrap().into_data();
+    //         println!("Receive msg: {:?}", data);
+    //         // tokio::io::stdout().write_all(&data).await.unwrap();
+    //     })
+    // };
+    // pin_mut!(stdin_to_ws, ws_to_stdout);
+    // future::select(stdin_to_ws, ws_to_stdout).await;
 
-    let stdin_to_ws = stdin_rx.map(Ok).forward(write);
-    let ws_to_stdout = {
-        read.for_each(|message| async {
-            let data = message.unwrap().into_data();
-            println!("Receive msg: {:?}", data);
-            // tokio::io::stdout().write_all(&data).await.unwrap();
-        })
-    };
-    pin_mut!(stdin_to_ws, ws_to_stdout);
-    future::select(stdin_to_ws, ws_to_stdout).await;
+    // println!("{}", y);
+    // loop {
+    //     thread::sleep(Duration::from_millis(4000))
+    // }
+
+    // let a1: [u32; 3] = serde_json::from_str("[\"hai\", 2, 3]").unwrap();
+
+    // println!("{:?}", a1);
+
+    // json_array();
     Ok(())
 }
 
-// Our helper method which will read data from stdin and send it along the
-// sender provided.
-async fn read_stdin(tx: futures_channel::mpsc::UnboundedSender<Message>) {
-    let mut stdin = tokio::io::stdin();
-    loop {
-        let mut buf = vec![0; 1024];
-        let n = match stdin.read(&mut buf).await {
-            Err(_) | Ok(0) => break,
-            Ok(n) => n,
-        };
-        buf.truncate(n);
-        tx.unbounded_send(Message::binary(buf)).unwrap();
+fn own(charrrr: String) {
+    println!("{:?}", charrrr);
+}
+
+fn json_array() {
+    use JsonValue::*;
+    let input = r#"[42,"x"]"#;
+    let expected: JsonValue = Array(vec![Num(42.0), Str("x".to_string())]);
+
+    // let sub_vec: Vec<JsonValue> = expected.iter().map(|v| v[0]).collect();
+
+    match expected {
+        // Shape::Circle(_, value) => println!("value: {}", value),
+        JsonValue::Num(value) => println!("{}", value),
+        JsonValue::Str(value) => println!("{}", value),
+        JsonValue::Array(value) => {
+            println!("{:?}", value.get(0))
+        }
+        _ => println!("Something else"),
     }
+
+    // println!("{:?}", expected);
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum JsonValue {
+    Null,
+    Bool(bool),
+    Str(String),
+    Num(f64),
+    Array(Vec<JsonValue>),
+    Object(HashMap<String, JsonValue>),
 }
