@@ -30,38 +30,31 @@ impl Client {
     }
 
     pub async fn connect(&mut self) -> Result<String> {
-        use JsonValue::*;
         let url = url::Url::parse(&CONNECTION).unwrap();
 
         let (ws_stream, _) = connect_async(url).await.expect("Cannot connect");
         let (write, read) = ws_stream.split();
-        // println!("WebSocket handshake has been successfully completed");
+        println!("WebSocket handshake has been successfully completed");
         let (stdin_tx, stdin_rx) = futures_channel::mpsc::unbounded();
         // tokio::spawn(self.read_stdin(stdin_tx));
 
         let stdin_to_ws = stdin_rx.map(Ok).forward(write);
         let handleReading = {
             read.for_each(|message| async {
-                // let data = message.unwrap().into_data();
                 let data: String = message.unwrap().into_text().unwrap();
-                println!("Receive msg: {:?}", data);
-
-                // let expected: JsonValue = Array(vec![Num(42.0), Str("x".to_string())]);
                 if data != "" {
                     let expected: Value = serde_json::from_str(data.as_str()).unwrap();
                     match expected {
                         // Shape::Circle(_, value) => println!("value: {}", value),
                         Value::Array(value) => {
-                            println!("SignalID: {:?}, StreamID {:?}", value.get(0), value.get(1));
+                            // let y: &mut Vec<Value> = &mut value;
+                            let y: &Vec<Value> = &value.clone();
+                            // println!("SignalID: {:?}, StreamID {:?}", value.get(0), value.get(1));
+                            self.handleData(y).await;
                         }
                         _ => println!("Something else"),
                     }
                 }
-
-                // let parsed: serde_json::Value =
-                //     serde_json::from_str(&data).expect("Can't parse to JSON");
-                // serde_json::from_str(&data).unwrap();
-                // tokio::io::stdout().write_all(&data).await.unwrap();
             })
         };
 
@@ -72,8 +65,8 @@ impl Client {
         ))
     }
 
-    async fn handleData() -> Result<String> {
-        Ok(String::from("HandleData Ok"))
+    async fn handleData(&self, data: &Vec<Value>) {
+        println!("{:?}", data);
     }
 
     // Our helper method which will read data from stdin and send it along the

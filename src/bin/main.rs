@@ -23,10 +23,12 @@ async fn main() -> Result<(), std::io::Error> {
     let result = client.connect().await.expect("Cannot connect");
 
     println!("{:?}", result);
+
     // tokio::spawn(read_stdin(stdin_tx));
 
     // let (write, read) = ws_stream.split();
 
+    //continue using p1 since ownership has been passed back
     // let stdin_to_ws = stdin_rx.map(Ok).forward(write);
     // let ws_to_stdout = {
     //     read.for_each(|message| async {
